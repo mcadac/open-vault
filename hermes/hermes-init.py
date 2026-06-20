@@ -3,18 +3,27 @@ import yaml, glob, os, subprocess
 data_dir = '/opt/data'
 config_path = data_dir + '/config.yaml'
 
+nous_key = os.environ.get('NOUS_API_KEY', '')
+model_patch = {
+    'provider': 'custom',
+    'base_url': 'https://inference-api.nousresearch.com/v1',
+    'default': 'anthropic/claude-sonnet-4.6',
+}
+if nous_key:
+    model_patch['api_key'] = nous_key
+
 if not os.path.exists(config_path):
     os.makedirs(data_dir, exist_ok=True)
     with open(config_path, 'w') as f:
-        yaml.dump({'model': {'default': 'anthropic/claude-opus-4.6', 'provider': 'openrouter'}}, f)
-    print('created initial config.yaml with openrouter provider')
+        yaml.dump({'model': model_patch}, f)
+    print('created initial config.yaml with nous provider')
 else:
     with open(config_path) as f:
         config = yaml.safe_load(f) or {}
-    config.setdefault('model', {})['provider'] = 'openrouter'
+    config.setdefault('model', {}).update(model_patch)
     with open(config_path, 'w') as f:
         yaml.dump(config, f, default_flow_style=False, allow_unicode=True)
-    print('patched config.yaml: model.provider=openrouter')
+    print('patched config.yaml: model.provider=custom (nous inference)')
 
 patched = 0
 for p in glob.glob(data_dir + '/profiles/*/config.yaml'):
