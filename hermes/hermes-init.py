@@ -24,18 +24,17 @@ else:
 config.setdefault('model', {}).update(model_patch)
 
 session_token = os.environ.get('HERMES_DASHBOARD_SESSION_TOKEN', '')
-if session_token:
-    try:
-        from plugins.dashboard_auth.basic import hash_password
-        config.setdefault('dashboard_auth', {})['basic'] = {
-            'username': 'hermes',
-            'password_hash': hash_password(session_token),
-        }
-        print('configured dashboard basic auth from session token')
-    except Exception as e:
-        print(f'warn: dashboard auth setup failed: {e}')
-else:
-    print('warn: HERMES_DASHBOARD_SESSION_TOKEN not set — dashboard auth not configured')
+try:
+    import secrets
+    from plugins.dashboard_auth.basic import hash_password
+    password = session_token if session_token else secrets.token_hex(24)
+    config.setdefault('dashboard', {})['basic_auth'] = {
+        'username': 'hermes',
+        'password_hash': hash_password(password),
+    }
+    print('configured dashboard basic auth')
+except Exception as e:
+    print(f'warn: dashboard auth setup failed: {e}')
 
 with open(config_path, 'w') as f:
     yaml.dump(config, f, default_flow_style=False, allow_unicode=True)
