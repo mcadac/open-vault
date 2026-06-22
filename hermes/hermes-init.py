@@ -12,18 +12,33 @@ model_patch = {
 if nous_key:
     model_patch['api_key'] = nous_key
 
-if not os.path.exists(config_path):
-    os.makedirs(data_dir, exist_ok=True)
-    with open(config_path, 'w') as f:
-        yaml.dump({'model': model_patch}, f)
-    print('created initial config.yaml with nous provider')
-else:
+os.makedirs(data_dir, exist_ok=True)
+if os.path.exists(config_path):
     with open(config_path) as f:
         config = yaml.safe_load(f) or {}
-    config.setdefault('model', {}).update(model_patch)
-    with open(config_path, 'w') as f:
-        yaml.dump(config, f, default_flow_style=False, allow_unicode=True)
     print('patched config.yaml: model.provider=custom (nous inference)')
+else:
+    config = {}
+    print('created initial config.yaml with nous provider')
+
+config.setdefault('model', {}).update(model_patch)
+
+session_token = os.environ.get('HERMES_DASHBOARD_SESSION_TOKEN', '')
+if session_token:
+    try:
+        from plugins.dashboard_auth.basic import hash_password
+        config.setdefault('dashboard_auth', {})['basic'] = {
+            'username': 'hermes',
+            'password_hash': hash_password(session_token),
+        }
+        print('configured dashboard basic auth from session token')
+    except Exception as e:
+        print(f'warn: dashboard auth setup failed: {e}')
+else:
+    print('warn: HERMES_DASHBOARD_SESSION_TOKEN not set — dashboard auth not configured')
+
+with open(config_path, 'w') as f:
+    yaml.dump(config, f, default_flow_style=False, allow_unicode=True)
 
 patched = 0
 for p in glob.glob(data_dir + '/profiles/*/config.yaml'):
