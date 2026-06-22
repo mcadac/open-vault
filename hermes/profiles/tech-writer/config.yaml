@@ -1,0 +1,7 @@
+max_turns: 20
+model: anthropic/claude-haiku-4.5
+platforms:
+  api_server:
+    enabled: false
+  discord:
+    enabled: false

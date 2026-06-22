@@ -1,0 +1,7 @@
+max_turns: 40
+model: deepseek/deepseek-v4-flash
+platforms:
+  api_server:
+    enabled: false
+  discord:
+    enabled: false

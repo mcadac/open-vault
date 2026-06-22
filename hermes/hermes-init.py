@@ -1,4 +1,4 @@
-import yaml, glob, os, subprocess
+import yaml, glob, os, subprocess, urllib.request
 
 data_dir = '/opt/data'
 config_path = data_dir + '/config.yaml'
@@ -42,6 +42,25 @@ for p in glob.glob(data_dir + '/profiles/*/config.yaml'):
         patched += 1
 if patched:
     print('patched ' + str(patched) + ' profile config(s): api_server+discord disabled')
+
+PROFILES_BASE = 'https://raw.githubusercontent.com/mcadac/open-vault/main/hermes/profiles'
+PROFILES = ['orchestrator', 'pm', 'architect', 'coder', 'reviewer', 'tester', 'tech-writer']
+
+installed = 0
+for profile in PROFILES:
+    profile_dir = f'{data_dir}/profiles/{profile}'
+    os.makedirs(profile_dir, exist_ok=True)
+    for fname in ['config.yaml', 'SOUL.md']:
+        url = f'{PROFILES_BASE}/{profile}/{fname}'
+        try:
+            with urllib.request.urlopen(url, timeout=10) as resp:
+                content = resp.read().decode('utf-8')
+            with open(f'{profile_dir}/{fname}', 'w') as f:
+                f.write(content)
+        except Exception as e:
+            print(f'warn: failed to fetch {profile}/{fname}: {e}')
+    installed += 1
+print(f'installed {installed} profiles from open-vault')
 
 if not os.path.exists('/mnt/hermes_cli/__init__.py'):
     print('copying hermes source to shared volume...')
