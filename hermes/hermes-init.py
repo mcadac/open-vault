@@ -46,19 +46,43 @@ if patched:
 PROFILES_BASE = 'https://raw.githubusercontent.com/mcadac/open-vault/main/hermes/profiles'
 PROFILES = ['orchestrator', 'pm', 'architect', 'coder', 'reviewer', 'tester', 'tech-writer']
 
+def _fetch(url):
+    try:
+        with urllib.request.urlopen(url, timeout=10) as resp:
+            return resp.read().decode('utf-8')
+    except Exception as e:
+        print(f'warn: fetch failed {url}: {e}')
+        return None
+
+def _fetch_write(url, path):
+    content = _fetch(url)
+    if content is not None:
+        with open(path, 'w') as f:
+            f.write(content)
+        return True
+    return False
+
 installed = 0
 for profile in PROFILES:
     profile_dir = f'{data_dir}/profiles/{profile}'
     os.makedirs(profile_dir, exist_ok=True)
+
     for fname in ['config.yaml', 'SOUL.md']:
-        url = f'{PROFILES_BASE}/{profile}/{fname}'
-        try:
-            with urllib.request.urlopen(url, timeout=10) as resp:
-                content = resp.read().decode('utf-8')
-            with open(f'{profile_dir}/{fname}', 'w') as f:
-                f.write(content)
-        except Exception as e:
-            print(f'warn: failed to fetch {profile}/{fname}: {e}')
+        _fetch_write(f'{PROFILES_BASE}/{profile}/{fname}', f'{profile_dir}/{fname}')
+
+    skills_list = _fetch(f'{PROFILES_BASE}/{profile}/skills-list.txt')
+    if skills_list:
+        skill_count = 0
+        for skill in skills_list.splitlines():
+            skill = skill.strip()
+            if not skill:
+                continue
+            skill_dir = f'{profile_dir}/skills/{skill}'
+            os.makedirs(skill_dir, exist_ok=True)
+            if _fetch_write(f'{PROFILES_BASE}/{profile}/skills/{skill}/SKILL.md', f'{skill_dir}/SKILL.md'):
+                skill_count += 1
+        print(f'  {profile}: {skill_count} skill(s) installed')
+
     installed += 1
 print(f'installed {installed} profiles from open-vault')
 
