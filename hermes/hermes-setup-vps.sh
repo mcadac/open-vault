@@ -12,18 +12,14 @@ hermes config set memory.provider holographic
 hermes config set plugins.hermes-memory-store.auto_extract true
 hermes config set plugins.hermes-memory-store.default_trust 0.7
 
-echo "==> Preparing Claude Code OAuth token store"
-# Agent gateway runs with HOME=/opt/data; Terminal tool subprocesses get HOME=/opt/data/home.
-# Both locations must have a valid (or placeholder) token file.
-mkdir -p /opt/data/home
-if [ -f /root/.claude.json ]; then
-  cp /root/.claude.json /opt/data/.claude.json
-  cp /root/.claude.json /opt/data/home/.claude.json
-else
-  [ ! -f /opt/data/.claude.json ] && touch /opt/data/.claude.json
-  [ ! -f /opt/data/home/.claude.json ] && touch /opt/data/home/.claude.json
-fi
-chmod 644 /opt/data/.claude.json /opt/data/home/.claude.json
+echo "==> Preparing Claude Code config dir"
+# Claude stores credentials in ~/.claude/.credentials.json (not ~/.claude.json).
+# Agent gateway: HOME=/opt/data  →  reads /opt/data/.claude/
+# Terminal tool subprocesses: HOME=/opt/data/home  →  reads /opt/data/home/.claude/
+# Symlink /opt/data/home/.claude → /opt/data/.claude so both HOME paths share one store.
+mkdir -p /opt/data/.claude /opt/data/home
+rm -rf /opt/data/home/.claude
+ln -sf /opt/data/.claude /opt/data/home/.claude
 
 echo "==> Putting claude CLI on PATH for agent terminal sessions"
 grep -q "hermes-shared/bin" "$HOME/.profile" 2>/dev/null || echo 'export PATH="/opt/hermes-shared/bin:$PATH"' >> "$HOME/.profile"
