@@ -4,7 +4,7 @@ set -euo pipefail
 export HOME=/opt/data
 HERMES_UID="${HERMES_UID:-10010}"
 
-usermod -u "$HERMES_UID" hermes 2>/dev/null || true
+usermod -u "$HERMES_UID" -d /opt/data hermes 2>/dev/null || true
 chown -R "$HERMES_UID:$HERMES_UID" /opt/data
 
 echo "==> Configuring memory provider: holographic"
