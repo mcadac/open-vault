@@ -13,18 +13,17 @@ hermes config set plugins.hermes-memory-store.auto_extract true
 hermes config set plugins.hermes-memory-store.default_trust 0.7
 
 echo "==> Preparing Claude Code OAuth token store"
-# Agent runs as hermes with HOME=/opt/data and cannot traverse /root (700).
-# If root has a token (from `claude auth login` as root), copy it to hermes home.
-if [ -f /root/.claude.json ]; then
-  cp /root/.claude.json "$HOME/.claude.json"
-elif [ ! -f "$HOME/.claude.json" ]; then
-  touch "$HOME/.claude.json"
-fi
-chmod 644 "$HOME/.claude.json"
-
-echo "==> Symlinking Claude auth token into Hermes terminal home"
+# Agent gateway runs with HOME=/opt/data; Terminal tool subprocesses get HOME=/opt/data/home.
+# Both locations must have a valid (or placeholder) token file.
 mkdir -p /opt/data/home
-ln -sf /opt/data/.claude.json /opt/data/home/.claude.json
+if [ -f /root/.claude.json ]; then
+  cp /root/.claude.json /opt/data/.claude.json
+  cp /root/.claude.json /opt/data/home/.claude.json
+else
+  [ ! -f /opt/data/.claude.json ] && touch /opt/data/.claude.json
+  [ ! -f /opt/data/home/.claude.json ] && touch /opt/data/home/.claude.json
+fi
+chmod 644 /opt/data/.claude.json /opt/data/home/.claude.json
 
 echo "==> Putting claude CLI on PATH for agent terminal sessions"
 grep -q "hermes-shared/bin" "$HOME/.profile" 2>/dev/null || echo 'export PATH="/opt/hermes-shared/bin:$PATH"' >> "$HOME/.profile"
