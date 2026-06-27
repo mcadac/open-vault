@@ -1,7 +1,0 @@
-max_turns: 90
-model: moonshotai/kimi-k2.7-code
-platforms:
-  api_server:
-    enabled: false
-  discord:
-    enabled: false

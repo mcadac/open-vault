@@ -1,4 +1,0 @@
-test-driven-development
-codebase-inspection
-github-pr-workflow
-systematic-debugging

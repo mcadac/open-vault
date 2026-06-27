@@ -12,6 +12,9 @@ hermes config set memory.provider holographic
 hermes config set plugins.hermes-memory-store.auto_extract true
 hermes config set plugins.hermes-memory-store.default_trust 0.7
 
+echo "==> Setting default model to deepseek-v4-flash"
+hermes config set model.default "deepseek/deepseek-v4-flash"
+
 echo "==> Preparing Claude Code config dir"
 # Claude stores credentials in ~/.claude/.credentials.json (not ~/.claude.json).
 # Agent gateway: HOME=/opt/data  →  reads /opt/data/.claude/
@@ -24,15 +27,12 @@ ln -sf /opt/data/.claude /opt/data/home/.claude
 echo "==> Putting claude CLI on PATH for agent terminal sessions"
 grep -q "hermes-shared/bin" "$HOME/.profile" 2>/dev/null || echo 'export PATH="/opt/hermes-shared/bin:$PATH"' >> "$HOME/.profile"
 
-echo "==> Installing Claude Code skill on all profiles"
+echo "==> Installing Claude Code skill on default profile"
 SKILL_URL="https://raw.githubusercontent.com/NousResearch/hermes-agent/main/skills/autonomous-ai-agents/claude-code/SKILL.md"
 SKILL_MD=$(curl -fsSL "$SKILL_URL")
-for profile in default coder tester reviewer architect orchestrator tech-writer pm; do
-  SKILL_DIR="/opt/data/profiles/$profile/skills/claude-code"
-  mkdir -p "$SKILL_DIR"
-  echo "$SKILL_MD" > "$SKILL_DIR/SKILL.md"
-  echo "    -> $profile: written"
-done
+SKILL_DIR="/opt/data/profiles/default/skills/claude-code"
+mkdir -p "$SKILL_DIR"
+echo "$SKILL_MD" > "$SKILL_DIR/SKILL.md"
 
 echo "==> Configuring daily backup cron (VPS)"
 SCRIPTS_DIR="${HERMES_HOME:-$HOME/.hermes}/scripts"
